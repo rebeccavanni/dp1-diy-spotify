@@ -34,7 +34,7 @@ _SUPPORTED_EXTENSIONS = (
 
 # ingestor lambda function
 @app.on_s3_event(bucket=S3_BUCKET, events=['s3:ObjectCreated:*'])
-def s3_handler(event):
+def process_song_metadata(event):
   if _is_json(event.key):
     # get the file, read it, load it into JSON as an object
     response = s3.get_object(Bucket=S3_BUCKET, Key=event.key)
