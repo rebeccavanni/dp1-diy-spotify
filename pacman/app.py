@@ -1,8 +1,4 @@
 import os
-
-from chalice import Chalice
-
-import os
 import json
 import mysql.connector
 import boto3
@@ -17,7 +13,8 @@ S3_BUCKET = 'ecn2wh-dp1-spotify'
 s3 = boto3.client('s3')
 
 # base URL for accessing the files
-baseurl = 'http://ecn2wh-dp1-spotify.s3-website-us-east-1.amazonaws.com'
+## UPDATE NEXT LINE
+baseurl = 'http://ecn2wh-dp1-spotify.s3-website-us-east-1.amazonaws.com/'
 
 # database things
 DBHOST = os.getenv('DBHOST')
@@ -46,7 +43,7 @@ def process_song_metadata(event):
     ALBUM = data.get("album")
     ARTIST = data.get("artist")
     YEAR = data.get("year")
-    GENRE = data.get("genre") 
+    GENRE = data.get("genre")
 
     # get the unique ID for the bundle to build the mp3 and jpg urls
     # you get 5 data points in each new JSON file that arrives, but
@@ -69,21 +66,15 @@ def process_song_metadata(event):
       song_vals = (TITLE, ALBUM, ARTIST, YEAR, MP3, IMG, GENRE)
       cur.execute(add_song, song_vals)
       db.commit()
+      cur.close()
+      db.close()
 
     except mysql.connector.Error as err:
       app.log.error("Failed to insert song: %s", err)
       db.rollback()
+      cur.close()
+      db.close()
 
 # perform a suffix match against supported extensions
 def _is_json(key):
   return key.endswith(_SUPPORTED_EXTENSIONS)
-
-
-# Set the value of APP_BUCKET_NAME in the .chalice/config.json file.
-S3_BUCKET = os.environ.get('APP_BUCKET_NAME', '')
-
-
-@app.on_s3_event(bucket=S3_BUCKET, events=['s3:ObjectCreated:*'])
-def s3_handler(event):
-    app.log.debug("Received event for bucket: %s, key: %s",
-                  event.bucket, event.key)
